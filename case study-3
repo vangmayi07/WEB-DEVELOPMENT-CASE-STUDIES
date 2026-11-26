@@ -1,0 +1,308 @@
+Save this as `eligibility-checker.html` and open it in a browser. It lets you enter multiple student records, checks each one for **Minor-1, Minor-2, and Endterm**, and displays the results in a table. The attendance and academic thresholds are sample rules; adjust them to match your university’s regulations.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendance & Exam Eligibility Checker</title>
+  <style>
+    body {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 24px;
+      color: #1d2938;
+      background: #f4f7fa;
+      font-family: Arial, sans-serif;
+      line-height: 1.5;
+    }
+
+    header, section {
+      margin-bottom: 20px;
+      padding: 20px;
+      border: 1px solid #e1e8ef;
+      border-radius: 12px;
+      background: #fff;
+    }
+
+    header {
+      color: white;
+      background: #123653;
+    }
+
+    h1, h2 {
+      margin-top: 0;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    label {
+      display: grid;
+      gap: 5px;
+      font-weight: bold;
+    }
+
+    input, select, button {
+      padding: 10px;
+      border: 1px solid #cbd5df;
+      border-radius: 7px;
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      border: 0;
+      color: white;
+      background: #1769aa;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: #123653;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .secondary {
+      color: #123653;
+      background: #e7eff6;
+    }
+
+    .secondary:hover {
+      color: white;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
+
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #e1e8ef;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th {
+      color: #123653;
+      background: #eef4f8;
+    }
+
+    .eligible {
+      color: #18794e;
+      font-weight: bold;
+    }
+
+    .not-eligible {
+      color: #b42318;
+      font-weight: bold;
+    }
+
+    .message {
+      margin-top: 12px;
+      color: #b42318;
+    }
+
+    .hint {
+      color: #637387;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 12px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Attendance & Exam Eligibility Checker</h1>
+    <p>Enter student details to check eligibility for Minor-1, Minor-2, and Endterm examinations.</p>
+  </header>
+
+  <main>
+    <section aria-labelledby="student-form-heading">
+      <h2 id="student-form-heading">Add Student</h2>
+      <form id="studentForm">
+        <div class="form-grid">
+          <label for="studentName">
+            Student name
+            <input type="text" id="studentName" required>
+          </label>
+
+          <label for="studentId">
+            Student ID
+            <input type="text" id="studentId" required>
+          </label>
+
+          <label for="attendance">
+            Attendance percentage
+            <input type="number" id="attendance" min="0" max="100" step="0.1" required>
+          </label>
+
+          <label for="performance">
+            Academic performance
+            <select id="performance" required>
+              <option value="">Select performance</option>
+              <option value="satisfactory">Satisfactory</option>
+              <option value="needs-improvement">Needs improvement</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="actions">
+          <button type="submit">Add student and check</button>
+          <button type="button" class="secondary" id="clearButton">Clear all records</button>
+        </div>
+        <p class="hint">
+          Demo rule: eligibility requires at least 75% attendance and satisfactory academic performance.
+        </p>
+        <p id="formMessage" class="message" role="alert"></p>
+      </form>
+    </section>
+
+    <section aria-labelledby="results-heading">
+      <h2 id="results-heading">Eligibility Results</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>ID</th>
+              <th>Attendance</th>
+              <th>Performance</th>
+              <th>Minor-1</th>
+              <th>Minor-2</th>
+              <th>Endterm</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody">
+            <tr id="emptyRow">
+              <td colspan="7">No student records have been added yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Sample eligibility rules. Change these values to match official regulations.
+    const MIN_ATTENDANCE = 75;
+
+    const studentForm = document.getElementById("studentForm");
+    const resultsBody = document.getElementById("resultsBody");
+    const formMessage = document.getElementById("formMessage");
+    const students = [];
+
+    function getEligibility(student) {
+      return student.attendance >= MIN_ATTENDANCE &&
+        student.performance === "satisfactory";
+    }
+
+    function createStatusCell(isEligible) {
+      const cell = document.createElement("td");
+      cell.textContent = isEligible ? "Eligible" : "Not eligible";
+      cell.className = isEligible ? "eligible" : "not-eligible";
+      return cell;
+    }
+
+    function renderStudents() {
+      resultsBody.replaceChildren();
+
+      if (students.length === 0) {
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+        cell.colSpan = 7;
+        cell.textContent = "No student records have been added yet.";
+        row.appendChild(cell);
+        resultsBody.appendChild(row);
+        return;
+      }
+
+      students.forEach((student) => {
+        const row = document.createElement("tr");
+        const eligible = getEligibility(student);
+
+        [
+          student.name,
+          student.id,
+          `${student.attendance}%`,
+          student.performance === "satisfactory"
+            ? "Satisfactory"
+            : "Needs improvement"
+        ].forEach((value) => {
+          const cell = document.createElement("td");
+          cell.textContent = value;
+          row.appendChild(cell);
+        });
+
+        // This demo applies the same rule to all three examination types.
+        row.appendChild(createStatusCell(eligible)); // Minor-1
+        row.appendChild(createStatusCell(eligible)); // Minor-2
+        row.appendChild(createStatusCell(eligible)); // Endterm
+
+        resultsBody.appendChild(row);
+      });
+    }
+
+    studentForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      formMessage.textContent = "";
+
+      if (!studentForm.reportValidity()) return;
+
+      const attendance = Number(document.getElementById("attendance").value);
+
+      if (attendance < 0 || attendance > 100) {
+        formMessage.textContent = "Attendance must be between 0 and 100.";
+        return;
+      }
+
+      students.push({
+        name: document.getElementById("studentName").value.trim(),
+        id: document.getElementById("studentId").value.trim(),
+        attendance,
+        performance: document.getElementById("performance").value
+      });
+
+      renderStudents();
+      studentForm.reset();
+      document.getElementById("studentName").focus();
+    });
+
+    document.getElementById("clearButton").addEventListener("click", () => {
+      students.length = 0;
+      formMessage.textContent = "";
+      renderStudents();
+    });
+
+    renderStudents();
+  </script>
+</body>
+</html>
+```
