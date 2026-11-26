@@ -1,0 +1,310 @@
+Save this as `student-service-portal.html` and open it in a browser. The form changes its fields based on whether the student selects a leave request, bonafide certificate, or elective registration. It validates inputs as the student types and shows a confirmation when the form passes validation.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Online Student Service Portal</title>
+  <style>
+    :root {
+      --navy: #123653;
+      --blue: #1769aa;
+      --text: #1d2938;
+      --muted: #637387;
+      --border: #d7e0e8;
+      --background: #f4f7fa;
+      --green: #18794e;
+      --red: #b42318;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      color: var(--text);
+      background: var(--background);
+      font-family: Arial, sans-serif;
+      line-height: 1.5;
+    }
+
+    header, main {
+      width: min(760px, 100%);
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 18px;
+      padding: 22px;
+      border-radius: 12px;
+      color: white;
+      background: var(--navy);
+    }
+
+    h1 { margin: 0 0 6px; font-size: 1.7rem; }
+    header p { margin: 0; color: #dceaf5; }
+
+    form {
+      padding: 22px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: white;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .field { display: grid; gap: 5px; }
+    .full { grid-column: 1 / -1; }
+
+    label { font-weight: 700; }
+
+    input, select, textarea, button {
+      width: 100%;
+      padding: 10px 11px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      font: inherit;
+    }
+
+    textarea { min-height: 100px; resize: vertical; }
+
+    input:focus, select:focus, textarea:focus {
+      outline: 3px solid #1769aa25;
+      border-color: var(--blue);
+    }
+
+    .hint, .error {
+      min-height: 1.2em;
+      margin: 0;
+      font-size: 0.88rem;
+    }
+
+    .hint { color: var(--muted); }
+    .error { color: var(--red); }
+    .invalid { border-color: var(--red); }
+
+    button {
+      margin-top: 18px;
+      border: 0;
+      color: white;
+      background: var(--blue);
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover { background: var(--navy); }
+
+    .confirmation {
+      display: none;
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 8px;
+      color: var(--green);
+      background: #e9f7ef;
+    }
+
+    .confirmation.visible { display: block; }
+
+    @media (max-width: 560px) {
+      body { padding: 14px; }
+      .form-grid { grid-template-columns: 1fr; }
+      .full { grid-column: auto; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Online Student Service Portal</h1>
+    <p>Submit a leave request, request a bonafide certificate, or register for an elective.</p>
+  </header>
+
+  <main>
+    <form id="serviceForm" novalidate>
+      <div class="form-grid">
+        <div class="field">
+          <label for="studentName">Full name</label>
+          <input id="studentName" name="studentName" autocomplete="name" required>
+          <p class="error" id="studentNameError"></p>
+        </div>
+
+        <div class="field">
+          <label for="studentId">Student ID</label>
+          <input id="studentId" name="studentId" required>
+          <p class="error" id="studentIdError"></p>
+        </div>
+
+        <div class="field">
+          <label for="email">University email</label>
+          <input id="email" name="email" type="email" autocomplete="email" required>
+          <p class="error" id="emailError"></p>
+        </div>
+
+        <div class="field">
+          <label for="requestType">Request type</label>
+          <select id="requestType" name="requestType" required>
+            <option value="">Choose a request</option>
+            <option value="leave">Leave request</option>
+            <option value="bonafide">Bonafide certificate</option>
+            <option value="elective">Elective course registration</option>
+          </select>
+          <p class="error" id="requestTypeError"></p>
+        </div>
+
+        <div id="dynamicFields" class="field full" aria-live="polite"></div>
+
+        <div class="field full">
+          <label for="details">Reason or additional details</label>
+          <textarea id="details" name="details" minlength="10" required></textarea>
+          <p class="hint">Enter at least 10 characters.</p>
+          <p class="error" id="detailsError"></p>
+        </div>
+      </div>
+
+      <button type="submit">Submit request</button>
+      <div id="confirmation" class="confirmation" role="status"></div>
+    </form>
+  </main>
+
+  <script>
+    const form = document.getElementById("serviceForm");
+    const requestType = document.getElementById("requestType");
+    const dynamicFields = document.getElementById("dynamicFields");
+    const confirmation = document.getElementById("confirmation");
+
+    // Each request type defines its own extra fields.
+    const requestFields = {
+      leave: [
+        { name: "startDate", label: "Leave start date", type: "date", required: true },
+        { name: "endDate", label: "Leave end date", type: "date", required: true }
+      ],
+      bonafide: [
+        { name: "purpose", label: "Certificate purpose", type: "text", required: true }
+      ],
+      elective: [
+        { name: "course", label: "Elective course name", type: "text", required: true },
+        { name: "courseCode", label: "Course code", type: "text", required: true }
+      ]
+    };
+
+    function renderRequestFields() {
+      dynamicFields.replaceChildren();
+      confirmation.classList.remove("visible");
+
+      const fields = requestFields[requestType.value] || [];
+
+      fields.forEach((field) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "field";
+
+        const label = document.createElement("label");
+        label.htmlFor = field.name;
+        label.textContent = field.label;
+
+        const input = document.createElement("input");
+        input.id = field.name;
+        input.name = field.name;
+        input.type = field.type;
+        input.required = field.required;
+
+        const error = document.createElement("p");
+        error.className = "error";
+        error.id = `${field.name}Error`;
+
+        wrapper.append(label, input, error);
+        dynamicFields.appendChild(wrapper);
+        input.addEventListener("input", () => validateField(input));
+        input.addEventListener("change", () => validateField(input));
+      });
+    }
+
+    function getErrorMessage(input) {
+      if (input.validity.valueMissing) return "This field is required.";
+      if (input.type === "email" && input.validity.typeMismatch) {
+        return "Enter a valid email address.";
+      }
+      if (input.name === "details" && input.value.trim().length < 10) {
+        return "Please enter at least 10 characters.";
+      }
+
+      if (input.name === "endDate") {
+        const startDate = document.getElementById("startDate");
+        if (startDate && input.value && input.value < startDate.value) {
+          return "End date must be on or after the start date.";
+        }
+      }
+
+      return "";
+    }
+
+    function validateField(input) {
+      const errorElement = document.getElementById(`${input.name}Error`);
+      if (!errorElement) return true;
+
+      const message = getErrorMessage(input);
+      errorElement.textContent = message;
+      input.classList.toggle("invalid", Boolean(message));
+      input.setAttribute("aria-invalid", String(Boolean(message)));
+      return !message;
+    }
+
+    function validateForm() {
+      const inputs = [...form.querySelectorAll("input[required], select[required], textarea[required]")];
+      return inputs.map(validateField).every(Boolean);
+    }
+
+    requestType.addEventListener("change", renderRequestFields);
+
+    // Validate fields as the student types or changes a selection.
+    form.addEventListener("input", (event) => {
+      if (event.target.matches("input, textarea")) {
+        validateField(event.target);
+      }
+    });
+
+    form.addEventListener("change", (event) => {
+      if (event.target.matches("select, input[type='date']")) {
+        validateField(event.target);
+        const endDate = document.getElementById("endDate");
+        if (endDate) validateField(endDate);
+      }
+    });
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      if (!validateForm()) {
+        confirmation.classList.remove("visible");
+        const firstInvalid = form.querySelector(".invalid");
+        if (firstInvalid) firstInvalid.focus();
+        return;
+      }
+
+      const formData = Object.fromEntries(new FormData(form).entries());
+
+      // Demo array of requests. Replace this with a server/API submission in production.
+      const requests = JSON.parse(sessionStorage.getItem("studentRequests") || "[]");
+      requests.push({
+        ...formData,
+        submittedAt: new Date().toISOString()
+      });
+      sessionStorage.setItem("studentRequests", JSON.stringify(requests));
+
+      const requestLabel = requestType.options[requestType.selectedIndex].text;
+      confirmation.textContent =
+        `${requestLabel} received for ${formData.studentName}. This demo stores the request in this browser session only.`;
+      confirmation.classList.add("visible");
+      form.reset();
+      renderRequestFields();
+      document.querySelectorAll(".error").forEach((element) => element.textContent = "");
+      document.querySelectorAll(".invalid").forEach((element) => element.classList.remove("invalid"));
+    });
+  </script>
+</body>
+</html>
+```
