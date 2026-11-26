@@ -1,0 +1,189 @@
+Here’s a standalone HTML5 page for the **Student Helpdesk & Circular Portal**. It uses semantic HTML, a notices table, resource links, an enquiry form, and a small responsive CSS block. Replace the sample notice and download links with official university content.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Helpdesk &amp; Circular Portal | MRU</title>
+  <style>
+    body {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 1rem;
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      color: #1d2938;
+    }
+
+    header, footer {
+      padding: 1rem;
+      background: #123653;
+      color: white;
+    }
+
+    nav ul {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      padding: 0;
+      list-style: none;
+    }
+
+    nav a, a {
+      color: #075b96;
+    }
+
+    header a {
+      color: white;
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      border: 1px solid #bbb;
+      padding: 0.65rem;
+      text-align: left;
+    }
+
+    form {
+      display: grid;
+      gap: 0.8rem;
+      max-width: 600px;
+    }
+
+    input, select, textarea, button {
+      box-sizing: border-box;
+      width: 100%;
+      padding: 0.6rem;
+      font: inherit;
+    }
+
+    button {
+      width: auto;
+      cursor: pointer;
+    }
+
+    @media (max-width: 600px) {
+      body { padding: 0.6rem; }
+      table { font-size: 0.9rem; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Malla Reddy University</h1>
+    <p>Student Helpdesk &amp; Circular Portal</p>
+    <nav aria-label="Main navigation">
+      <ul>
+        <li><a href="#notices">Notices</a></li>
+        <li><a href="#resources">Student resources</a></li>
+        <li><a href="#enquiry">Submit an enquiry</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section aria-labelledby="welcome-heading">
+      <h2 id="welcome-heading">Welcome, Students</h2>
+      <figure>
+        <img
+          src="https://placehold.co/900x280?text=Malla+Reddy+University"
+          alt="Malla Reddy University campus banner">
+        <figcaption>Student information and academic updates.</figcaption>
+      </figure>
+      <p>
+        Find academic circulars, examination notifications, campus announcements,
+        and useful student resources on this page.
+      </p>
+    </section>
+
+    <section id="notices" aria-labelledby="notices-heading">
+      <h2 id="notices-heading">Latest Notices</h2>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Date</th>
+            <th scope="col">Notice</th>
+            <th scope="col">Category</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>26 Nov 2026</td>
+            <td>End-term examination schedule</td>
+            <td>Examinations</td>
+          </tr>
+          <tr>
+            <td>24 Nov 2026</td>
+            <td>Library timings during examination week</td>
+            <td>Campus</td>
+          </tr>
+          <tr>
+            <td>20 Nov 2026</td>
+            <td>Academic calendar update</td>
+            <td>Academic</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="resources" aria-labelledby="resources-heading">
+      <h2 id="resources-heading">Downloadable Resources</h2>
+      <ul>
+        <li><a href="files/academic-calendar.pdf" download>Academic calendar (PDF)</a></li>
+        <li><a href="files/exam-guidelines.pdf" download>Examination guidelines (PDF)</a></li>
+        <li><a href="files/student-handbook.pdf" download>Student handbook (PDF)</a></li>
+      </ul>
+    </section>
+
+    <section id="enquiry" aria-labelledby="enquiry-heading">
+      <h2 id="enquiry-heading">Student Enquiry Form</h2>
+      <p>Complete the form and the relevant university office can follow up.</p>
+
+      <form action="#" method="post">
+        <label for="name">Full name</label>
+        <input type="text" id="name" name="name" autocomplete="name" required>
+
+        <label for="student-id">Student ID</label>
+        <input type="text" id="student-id" name="student-id" required>
+
+        <label for="email">University email</label>
+        <input type="email" id="email" name="email" autocomplete="email" required>
+
+        <label for="category">Enquiry category</label>
+        <select id="category" name="category" required>
+          <option value="">Select a category</option>
+          <option value="academics">Academics</option>
+          <option value="examinations">Examinations</option>
+          <option value="campus">Campus services</option>
+          <option value="other">Other</option>
+        </select>
+
+        <label for="message">Your enquiry</label>
+        <textarea id="message" name="message" rows="5" required></textarea>
+
+        <button type="submit">Submit enquiry</button>
+      </form>
+    </section>
+  </main>
+
+  <footer>
+    <address>
+      Malla Reddy University Student Helpdesk<br>
+      Email: <a href="mailto:helpdesk@mru.edu.in">helpdesk@mru.edu.in</a>
+    </address>
+    <p>&copy; 2026 Malla Reddy University</p>
+  </footer>
+</body>
+</html>
+```
